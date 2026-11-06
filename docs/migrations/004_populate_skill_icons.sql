@@ -1,0 +1,156 @@
+-- Migration 004: Icon Mapping Reference (Do NOT Execute)
+-- Purpose: Reference guide for icon identifiers assigned to skills by iconMappingService.js
+-- Date: 2026-11-04
+-- Status: NOT EXECUTABLE - Icons are assigned automatically by the application layer
+-- 
+-- IMPORTANT: DO NOT EXECUTE THIS FILE
+-- 
+-- Icons are automatically assigned when skills are created/edited in the admin form.
+-- The iconMappingService.js handles all icon detection and assignment.
+-- This file is provided as documentation only.
+--
+-- ============================================================================
+-- HOW ICONS ARE ASSIGNED IN THE NEW WORKFLOW
+-- ============================================================================
+--
+-- 1. Admin creates a new skill via "Ajouter une compétence" form
+-- 2. Admin enters skill name (e.g., "React")
+-- 3. iconMappingService.js detects matching icon automatically
+-- 4. IconDisplay component shows preview in the form
+-- 5. Admin saves the skill
+-- 6. skillService.js calls transformSkillToDatabase()
+-- 7. transformSkillToDatabase() preserves the icon field
+-- 8. Skill is saved to Supabase with icon identifier
+-- 9. Icon displays in public portfolio (Skills Grid + Marquee)
+--
+-- ============================================================================
+-- ICON MAPPING REFERENCE
+-- ============================================================================
+--
+-- This section documents the icon identifiers for reference.
+-- These are defined in src/services/iconMappingService.js
+-- and are automatically matched during skill creation.
+--
+-- Langages:
+--   HTML5              → devicon-html5-plain
+--   CSS3               → devicon-css3-plain
+--   JavaScript         → devicon-javascript-plain
+--   TypeScript         → devicon-typescript-plain
+--   Python             → devicon-python-plain
+--   PHP                → devicon-php-plain
+--   Java               → devicon-java-plain
+--   C#                 → devicon-csharp-plain
+--   Dart               → devicon-dart-plain
+--
+-- Frontend:
+--   React              → devicon-react-plain
+--   Next.js            → devicon-nextjs-plain
+--   Tailwind CSS       → devicon-tailwindcss-plain
+--   Bootstrap          → devicon-bootstrap-plain
+--   Flutter            → devicon-flutter-plain
+--   FlutterFlow        → simpleicons-flutter
+--
+-- Backend:
+--   Node.js            → devicon-nodejs-plain
+--   Express.js         → devicon-express-plain
+--   NestJS             → devicon-nestjs-plain
+--   Symfony            → devicon-symfony-plain
+--   .NET               → devicon-dot-net-plain
+--   Java/JEE           → devicon-java-plain
+--
+-- Bases de données:
+--   MongoDB            → devicon-mongodb-plain
+--   MySQL              → devicon-mysql-plain
+--   PostgreSQL         → devicon-postgresql-plain
+--   Oracle             → devicon-oracle-plain
+--   SQL Server         → devicon-microsoftsqlserver-plain
+--
+-- DevOps & Outils:
+--   Git                → devicon-git-plain
+--   GitHub             → devicon-github-plain
+--   GitHub Actions     → devicon-github-plain
+--   Docker             → devicon-docker-plain
+--   Jenkins            → devicon-jenkins-plain
+--   Swagger            → devicon-swagger-plain
+--   Jira               → devicon-jira-plain
+--
+-- UI/UX Design:
+--   Figma              → devicon-figma-plain
+--   Figma Make         → devicon-figma-plain
+--   UX Design          → simpleicons-designthinking
+--   Wireframing        → simpleicons-designthinking
+--   Prototyping        → simpleicons-designthinking
+--
+-- CMS:
+--   WordPress          → devicon-wordpress-plain
+--   Elementor          → simpleicons-elementor
+--
+-- Systèmes:
+--   Windows            → devicon-windows8-plain
+--   Linux              → devicon-linux-plain
+--
+-- Unsupported Skills:
+--   Any skill not in the mapping above will use a fallback:
+--   → First letter of the skill name in a generic icon
+--
+-- ============================================================================
+-- ICON SOURCES
+-- ============================================================================
+--
+-- Primary: Devicon v2.15.1 (https://devicon.dev/)
+--   - Used via CDN: https://cdn.jsdelivr.net/gh/devicons/devicon@v2.15.1/devicon.min.css
+--   - Format: devicon-<name>-plain (CSS class)
+--   - 33 of 41 skills use Devicon
+--
+-- Fallback: Simple Icons (https://simpleicons.org/)
+--   - Used via CDN: https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/<name>.svg
+--   - Format: simpleicons-<name> (SVG URL)
+--   - 8 of 41 skills use Simple Icons
+--
+-- Final Fallback: First letter of skill name
+--   - Used when skill not found in either library
+--   - Displayed in generic icon background
+--
+-- ============================================================================
+-- TESTING ICON ASSIGNMENT
+-- ============================================================================
+--
+-- To verify icon assignment works correctly:
+--
+-- 1. Open Admin → Skills → Ajouter une compétence
+-- 2. Type "React" in the skill name field
+-- 3. Verify icon preview shows React icon (blue circular)
+-- 4. Type "MongoDB" and verify MongoDB icon (green circular)
+-- 5. Type "CustomTech" (non-existent) and verify fallback (first letter "C")
+-- 6. Save a skill and verify:
+--    a. Icon displays in public Skills Grid (56px size)
+--    b. Icon displays in public Marquee section (40px size)
+--    c. Refreshing page keeps icon visible
+--    d. Admin form shows icon in edit mode
+--
+-- ============================================================================
+-- QUERYING ICONS IN SUPABASE (REFERENCE ONLY)
+-- ============================================================================
+--
+-- To check icons stored in Supabase (after skills are created):
+--
+-- SELECT id, name, category, icon FROM public.skills ORDER BY display_order;
+--
+-- Example output:
+--   id | name    | category | icon
+--   1  | React   | Frontend | devicon-react-plain
+--   2  | MongoDB | Bases de données | devicon-mongodb-plain
+--
+-- ============================================================================
+-- NOTES
+-- ============================================================================
+--
+-- - This file is NOT executable and should NOT be run in Supabase
+-- - Icon assignment is handled by the application layer (iconMappingService.js)
+-- - All 41 icons are pre-mapped and automatically detected by skill name
+-- - New skills added manually will have icons auto-assigned if they match the mapping
+-- - Unsupported skills will gracefully fallback to first letter
+-- - Icons are stored in the 'icon' field of the 'skills' table
+-- - Icon field already exists in the skills table schema (from Migration 002)
+--
+-- ============================================================================

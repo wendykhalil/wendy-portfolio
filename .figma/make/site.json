@@ -1,0 +1,11 @@
+{
+  "title": "Mohamed Khalil Wendy | Portfolio",
+  "description": "A bilingual developer portfolio showcases Med Khalil Wendy's projects, skills, and experience, with an admin dashboard to manage content and messages.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
