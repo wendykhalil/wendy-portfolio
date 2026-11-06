@@ -187,15 +187,6 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
   const [isLoadingExperiences, setIsLoadingExperiences] = useState(true)
   const [experienceError, setExperienceError] = useState(null)
   
-  // Load profile from Supabase on mount
-  useEffect(() => {
-    const loadProfile = async () => {
-      const { loadProfileFromDatabase } = await import('./services/profileService.js')
-      await loadProfileFromDatabase()
-    }
-    loadProfile()
-  }, [])
-  
   // Load contact settings from Supabase on mount
   useEffect(() => {
     const loadContactSettings = async () => {
@@ -289,8 +280,7 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
   }, [])
   
   // Get profile data from service
-  const profileData = getProfile()
-  const profileContent = profileData.content[locale]
+  const profileContent = profileData?.content[locale] || {}
   
   const content = {
     fr: {
@@ -453,7 +443,7 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
           <button className="brand" onClick={() => go("home")}>
             <span>MK</span>
             <div>
-              {profileData.personal.fullName.split(" ").slice(1).join(" ")}<small>{profileContent.title2}</small>
+              {profileData?.personal?.fullName?.split(" ")?.slice(1)?.join(" ") || "Wendy"}<small>{profileContent.title2}</small>
             </div>
           </button>
           <nav className={menu ? "open" : ""}>
@@ -511,11 +501,11 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
           <div className="hero-grid">
             <div className="hero-copy reveal">
               <span className="eyebrow">
-                {profileData.content[locale].label || 'PORTFOLIO 2026'}
+                {profileData?.content[locale]?.label || 'PORTFOLIO 2026'}
               </span>
               <h1>
-                {profileData.content[locale].greeting || (locale === 'fr' ? 'Bonjour, je suis' : 'Hello, I am')}
-                <strong>{profileData.personal.fullName}</strong>
+                {profileData?.content[locale]?.greeting || (locale === 'fr' ? 'Bonjour, je suis' : 'Hello, I am')}
+                <strong>{profileData?.personal?.fullName || 'Med Khalil Wendy'}</strong>
               </h1>
               <div className="hero-role">
                 <span>{content.role}</span>
@@ -546,12 +536,12 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
                   </div>
                 </div>
                 <div className="socials">
-                  {profileData.social.github && (
+                  {profileData?.social?.github && (
                     <a href={profileData.social.github} aria-label="GitHub" target="_blank" rel="noopener noreferrer">
                       <Icon name="github" />
                     </a>
                   )}
-                  {profileData.social.linkedin && (
+                  {profileData?.social?.linkedin && (
                     <a href={profileData.social.linkedin} aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
                       <Icon name="linkedin" />
                     </a>
@@ -563,7 +553,7 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
               <div className="portrait-glow" />
               <div className="portrait-frame">
                 <img
-                  src={profileData.personal.photo}
+                  src={profileData?.personal?.photo || '/images/profile.jpg'}
                   alt="Portrait professionnel placeholder de Med Khalil Wendy"
                 />
                 <div className="portrait-overlay" />
@@ -938,7 +928,7 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
           <div className="brand">
             <span>MK</span>
             <div>
-              {profileData.personal.fullName}
+              {profileData?.personal?.fullName || "Med Khalil Wendy"}
               <small>{profileContent.title2} & UI/UX Designer</small>
             </div>
           </div>
@@ -956,7 +946,7 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
         </div>
         <div className="footer-bottom">
           <span>
-            © 2026 {profileData.personal.fullName}.{" "}
+            © 2026 {profileData?.personal?.fullName || "Med Khalil Wendy"}.{" "}
             {locale === "fr" ? "Tous droits réservés." : "All rights reserved."}
           </span>
           <span>
@@ -2983,30 +2973,67 @@ function ProfileAdmin({ notify }) {
   // Get current profile data
   const profileData = getProfile()
   
-  // Form state - initialize from profile service
-  const [form, setForm] = useState({
-    fullName: profileData.personal.fullName,
-    email: profileData.personal.email,
-    phone: profileData.personal.phone,
-    location: profileData.personal.location,
-    heroLabelFr: profileData.content.fr.label || 'PORTFOLIO 2026',
-    heroLabelEn: profileData.content.en.label || 'PORTFOLIO 2026',
-    heroGreetingFr: profileData.content.fr.greeting || 'Bonjour, je suis',
-    heroGreetingEn: profileData.content.en.greeting || 'Hello, I am',
-    titleFr: profileData.content.fr.title,
-    titleEn: profileData.content.en.title,
-    heroBioFr: profileData.content.fr.hero,
-    heroBioEn: profileData.content.en.hero,
-    aboutFr: profileData.content.fr.about,
-    aboutEn: profileData.content.en.about,
-    availableFr: profileData.content.fr.available,
-    availableEn: profileData.content.en.available,
-    github: profileData.social.github,
-    linkedin: profileData.social.linkedin,
-    availability: profileData.availability,
-    photo: profileData.personal.photo,
-    previewPhoto: null,
-  })
+  // Form state - initialize from profile data (with fallbacks)
+  const getInitialFormState = () => {
+    if (!profileData) {
+      return {
+        fullName: "Med Khalil Wendy",
+        email: "",
+        phone: "",
+        location: "Tunisie",
+        heroLabelFr: 'PORTFOLIO 2026',
+        heroLabelEn: 'PORTFOLIO 2026',
+        heroGreetingFr: 'Bonjour, je suis',
+        heroGreetingEn: 'Hello, I am',
+        titleFr: "Future Ingénieur Informatique",
+        titleEn: "Future Software Engineer",
+        heroBioFr: "",
+        heroBioEn: "",
+        aboutFr: "",
+        aboutEn: "",
+        availableFr: "",
+        availableEn: "",
+        github: "",
+        linkedin: "",
+        availability: true,
+        photo: "/images/profile.jpg",
+        previewPhoto: null,
+      }
+    }
+    
+    return {
+      fullName: profileData.personal.fullName,
+      email: profileData.personal.email,
+      phone: profileData.personal.phone,
+      location: profileData.personal.location,
+      heroLabelFr: profileData.content.fr.label || 'PORTFOLIO 2026',
+      heroLabelEn: profileData.content.en.label || 'PORTFOLIO 2026',
+      heroGreetingFr: profileData.content.fr.greeting || 'Bonjour, je suis',
+      heroGreetingEn: profileData.content.en.greeting || 'Hello, I am',
+      titleFr: profileData.content.fr.title,
+      titleEn: profileData.content.en.title,
+      heroBioFr: profileData.content.fr.hero,
+      heroBioEn: profileData.content.en.hero,
+      aboutFr: profileData.content.fr.about,
+      aboutEn: profileData.content.en.about,
+      availableFr: profileData.content.fr.available,
+      availableEn: profileData.content.en.available,
+      github: profileData.social.github,
+      linkedin: profileData.social.linkedin,
+      availability: profileData.availability,
+      photo: profileData.personal.photo,
+      previewPhoto: null,
+    }
+  }
+
+  const [form, setForm] = useState(getInitialFormState)
+  
+  // Update form when profileData loads
+  useEffect(() => {
+    if (profileData) {
+      setForm(getInitialFormState())
+    }
+  }, [profileData])
 
   // Track if form has been modified
   const [isDirty, setIsDirty] = useState(false)
@@ -4145,12 +4172,32 @@ function SettingsAdmin({ notify }) {
 export default function App() {
   const [locale, setLocale] = useState("fr")
   const [refresh, setRefresh] = useState(0) // Force re-render when projects change
+  const [profileData, setProfileData] = useState(null) // Add profile data state
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const isAdminPath = window.location.pathname.startsWith("/admin")
+
+  // Load profile from Supabase on component mount
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const { loadProfileFromDatabase, getProfile: getProfileData } = await import('./services/profileService.js')
+        const result = await loadProfileFromDatabase()
+        // Get fresh profile data after loading from database
+        const freshProfile = getProfileData()
+        setProfileData(freshProfile)
+      } catch (err) {
+        console.error('Error loading profile:', err)
+        // Fallback to default profile
+        const { getProfile: getProfileData } = await import('./services/profileService.js')
+        setProfileData(getProfileData())
+      }
+    }
+    loadProfile()
+  }, [])
 
   // Initialize auth state on component mount
   useEffect(() => {
