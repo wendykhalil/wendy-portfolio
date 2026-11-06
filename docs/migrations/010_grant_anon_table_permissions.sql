@@ -1,0 +1,234 @@
+-- ============================================================================
+-- MIGRATION 010: Grant Anon Role Table Permissions for Contact Form
+-- ============================================================================
+-- Date: 2026-11-04
+-- Severity: CRITICAL (production contact form blocked)
+-- Purpose: Allow unauthenticated visitors to submit contact messages
+-- Root Cause: RLS policies exist but anon role lacks table-level permissions
+-- Solution: Grant necessary privileges to anon role while keeping RLS enabled
+--
+-- Technical Details:
+-- In Supabase, RLS policies are only checked AFTER a role has the base privilege
+-- to access the table. Without GRANT, even a permissive policy (WITH CHECK true)
+-- cannot be reached, resulting in "violates row-level security policy" error.
+--
+-- This migration follows the Supabase security model:
+-- 1. RLS remains ENABLED (defense in depth)
+-- 2. Policies remain in place (control which rows are accessible)
+-- 3. Base privileges are GRANTED (allow role to attempt access)
+--
+-- Result: Public visitors can submit forms, admins manage messages, privacy preserved
+--
+-- Status: READY FOR MANUAL EXECUTION IN SUPABASE SQL EDITOR
+-- ============================================================================
+
+-- ============================================================================
+-- STEP 1: Grant Schema Access
+-- ============================================================================
+-- The anon role must have USAGE permission on the schema to access any tables
+GRANT USAGE ON SCHEMA public TO anon;
+
+-- ============================================================================
+-- STEP 2: Grant Table Permissions for contact_messages
+-- ============================================================================
+-- Grant all DML permissions to anon role
+-- RLS policies will control which operations succeed:
+-- - INSERT: Allowed by "contact_messages_public_insert" policy
+-- - SELECT: Blocked by lack of "contact_messages_public_select" policy
+-- - UPDATE: Blocked by lack of "contact_messages_public_update" policy  
+-- - DELETE: Blocked by lack of "contact_messages_public_delete" policy
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contact_messages TO anon;
+
+-- ============================================================================
+-- STEP 3: Grant Read Access to contact_settings
+-- ============================================================================
+-- Anon users need to read contact settings (email, phone, etc. for display)
+-- UPDATE/DELETE are already restricted to authenticated admins by policy
+GRANT SELECT ON public.contact_settings TO anon;
+
+-- ============================================================================
+-- STEP 4: Grant Read Access to admin_users
+-- ============================================================================
+-- The admin check policies for contact_messages and contact_settings
+-- require the ability to query admin_users table to verify admin status.
+-- Without SELECT on this table, the policies cannot execute their USING clauses.
+GRANT SELECT ON public.admin_users TO anon;
+
+-- ============================================================================
+-- STEP 5: Verify Execution (Run After Migration)
+-- ============================================================================
+-- In Supabase SQL Editor, verify permissions were granted:
+--
+-- SELECT grantee, privilege_type 
+-- FROM information_schema.role_table_grants 
+-- WHERE table_name IN ('contact_messages', 'contact_settings', 'admin_users')
+-- AND grantee = 'anon'
+-- ORDER BY table_name, privilege_type;
+--
+-- Expected output:
+-- grantee | privilege_type
+-- --------|----------------
+-- anon    | DELETE
+-- anon    | INSERT
+-- anon    | SELECT
+-- anon    | UPDATE
+--
+-- ============================================================================
+-- STEP 6: Test Contact Form After Migration
+-- ============================================================================
+--
+-- 1. Open portfolio in new incognito/private browser window (anon user)
+-- 2. Navigate to contact section
+-- 3. Fill out form:
+--    - Name: [any name]
+--    - Email: [valid email]
+--    - Subject: [any subject]
+--    - Message: [message, min 10 chars]
+-- 4. Click Submit
+-- 5. Expected result: ✅ "Thank you for your message" success message
+-- 6. Verify in Supabase:
+--    - Table Editor → contact_messages
+--    - Should see new row with submitted data
+--    - visitor_name, visitor_email, subject, message populated
+--    - is_read = false (default)
+--    - created_at = current timestamp
+--
+-- 7. Test admin access (logged in as admin user):
+--    - Admin dashboard should show new message
+--    - Can mark as read/unread
+--    - Can delete message
+--
+-- ============================================================================
+-- STEP 7: Security Verification
+-- ============================================================================
+--
+-- Verify that security is maintained:
+--
+-- A) Unauthenticated users (anon) can:
+--    ✅ INSERT new contact messages (via policy)
+--    ❌ READ other visitors' messages (no select policy)
+--    ❌ UPDATE messages (no update policy)
+--    ❌ DELETE messages (no delete policy)
+--
+-- B) Authenticated admins can:
+--    ✅ SELECT all messages (via policy + admin check)
+--    ✅ UPDATE messages (mark as read) (via policy + admin check)
+--    ✅ DELETE messages (via policy + admin check)
+--
+-- C) Non-admin authenticated users:
+--    ❌ Cannot do anything (policies check for admin role)
+--
+-- D) Service role (backend):
+--    ✅ Can do everything (service role bypasses RLS)
+--
+-- ============================================================================
+-- TROUBLESHOOTING
+-- ============================================================================
+--
+-- If contact form STILL fails after this migration:
+--
+-- 1. Check Supabase logs:
+--    - Dashboard → Logs
+--    - Filter by contact_messages table
+--    - Look for exact error message
+--
+-- 2. Run diagnostic query:
+--    SELECT grantee, privilege_type FROM information_schema.role_table_grants
+--    WHERE table_name = 'contact_messages' AND grantee = 'anon';
+--    - Should show INSERT, SELECT, UPDATE, DELETE
+--    - If empty, grant statement failed
+--
+-- 3. Check if admin_users table exists:
+--    SELECT 1 FROM admin_users LIMIT 1;
+--    - If not found, create it first
+--    - Used by RLS policies to check admin status
+--
+-- 4. Check RLS policies are still intact:
+--    SELECT policyname FROM pg_policies
+--    WHERE tablename = 'contact_messages';
+--    - Should see 4 policies:
+--      - contact_messages_public_insert
+--      - contact_messages_admin_read
+--      - contact_messages_admin_update
+--      - contact_messages_admin_delete
+--
+-- 5. Test with Edge Function or backend code:
+--    - Create message using service_role client
+--    - If service_role works but anon doesn't, issue is permissions
+--    - If both fail, issue is elsewhere (schema, triggers, etc.)
+--
+-- ============================================================================
+-- ROLLBACK (if needed)
+-- ============================================================================
+--
+-- If this migration causes issues, revoke permissions:
+--
+-- REVOKE USAGE ON SCHEMA public FROM anon;
+-- REVOKE SELECT, INSERT, UPDATE, DELETE ON public.contact_messages FROM anon;
+-- REVOKE SELECT ON public.contact_settings FROM anon;
+-- REVOKE SELECT ON public.admin_users FROM anon;
+--
+-- Then investigate root cause more deeply (triggers, constraints, etc.)
+--
+-- ============================================================================
+-- RELATED FILES & CONTEXT
+-- ============================================================================
+--
+-- Frontend form submission: src/components/ContactForm.jsx
+-- Service layer: src/services/contactService.js (line 138-147)
+-- Supabase client: src/lib/supabaseClient.js (uses anon key)
+--
+-- Form data sent (in exact order):
+-- {
+--   visitor_name: "User Name" (TEXT, NOT NULL, max 255)
+--   visitor_email: "user@email.com" (TEXT, NOT NULL, max 255)
+--   subject: "Message Subject" (TEXT, NOT NULL, max 255)
+--   message: "Full message body" (TEXT, NOT NULL, max 5000)
+--   user_agent: "Mozilla/5.0..." (TEXT, NULL, from navigator.userAgent)
+--   ip_address: null (cannot be determined from frontend)
+-- }
+--
+-- Database columns (from migration 005):
+-- - id: BIGSERIAL PRIMARY KEY (auto-generated)
+-- - visitor_name: TEXT NOT NULL
+-- - visitor_email: TEXT NOT NULL
+-- - subject: TEXT NOT NULL
+-- - message: TEXT NOT NULL
+-- - is_read: BOOLEAN DEFAULT false
+-- - ip_address: TEXT (NULL)
+-- - user_agent: TEXT (NULL)
+-- - created_at: TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- - updated_at: TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+--
+-- RLS Policies on contact_messages:
+-- 1. contact_messages_public_insert (INSERT TO public WITH CHECK true)
+-- 2. contact_messages_admin_read (SELECT TO authenticated + admin check)
+-- 3. contact_messages_admin_update (UPDATE TO authenticated + admin check)
+-- 4. contact_messages_admin_delete (DELETE TO authenticated + admin check)
+--
+-- RLS Policies on contact_settings:
+-- 1. contact_settings_public_read (SELECT TO public WITH CHECK true)
+-- 2. contact_settings_admin_update (UPDATE TO authenticated + admin check)
+--
+-- ============================================================================
+-- NOTES FOR FUTURE DEVELOPERS
+-- ============================================================================
+--
+-- This migration is a prerequisite for public form submission to work.
+-- It must be executed AFTER migration 005_create_contact_tables.sql.
+--
+-- Key principle: RLS policies + role grants work together:
+-- - Policies: Control which rows/columns are visible (authorization)
+-- - Grants: Control table access (authentication/permission to try)
+--
+-- Missing either one causes "violates row-level security policy" error.
+--
+-- If you add new tables that should be accessible to public/anon users:
+-- 1. Create table with RLS enabled
+-- 2. Create permissive policies (e.g., WITH CHECK true for public ops)
+-- 3. GRANT necessary privileges to anon role
+-- 4. Test with public client (not service_role)
+--
+-- ============================================================================
+-- END OF MIGRATION 010
+-- ============================================================================
