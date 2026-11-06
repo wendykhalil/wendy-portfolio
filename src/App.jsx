@@ -170,7 +170,7 @@ function Toast({ message }) {
   )
 }
 
-function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
+function PublicPortfolio({ projects, projectsLoading, locale, setLocale, profileData }) {
   const [menu, setMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [filter, setFilter] = useState("All")
@@ -1381,7 +1381,7 @@ function AdminApp({ projects, setProjects, onLogout }) {
           {page === "skills" && (
             <SkillsAdmin notify={notify} />
           )}
-          {page === "profile" && <ProfileAdmin notify={notify} />}
+          {page === "profile" && <ProfileAdmin notify={notify} profileData={profileData} />}
           {page === "services" && <ServicesAdmin notify={notify} />}
           {page === "contact" && (
             <>
@@ -2969,9 +2969,7 @@ function SkillEditor({ skill, onClose, onSave }) {
     </div>
   )
 }
-function ProfileAdmin({ notify }) {
-  // Get current profile data
-  const profileData = getProfile()
+function ProfileAdmin({ notify, profileData }) {
   
   // Form state - initialize from profile data (with fallbacks)
   const getInitialFormState = () => {
@@ -4371,6 +4369,7 @@ export default function App() {
         projectsLoading={projectsLoading}
         locale={locale}
         setLocale={setLocale}
+        profileData={profileData}
       />
     )
   }
