@@ -565,6 +565,7 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale }) {
                 <img
                   src={profileData.personal.photo}
                   alt="Portrait professionnel placeholder de Med Khalil Wendy"
+                  onError={(e) => { e.target.src = '/images/profile.jpg' }}
                 />
                 <div className="portrait-overlay" />
               </div>
