@@ -553,7 +553,7 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale, profile
               <div className="portrait-glow" />
               <div className="portrait-frame">
                 <img
-                  src={profileData?.personal?.photo || '/images/profile.jpg'}
+                  src="/images/profile.jpg"
                   alt="Portrait professionnel placeholder de Med Khalil Wendy"
                 />
                 <div className="portrait-overlay" />
