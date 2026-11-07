@@ -185,9 +185,14 @@
 .project-category span { color:#55555e; }
 .project-body h3 { font-size:18px;margin:9px 0;letter-spacing:-.02em; }
 .project-body > p { color:var(--muted);font-size:14px;line-height:1.7;min-height:38px; }
-.project-actions { display:flex;align-items:center;justify-content:space-between;margin-top:22px;padding-top:16px;border-top:1px solid var(--line); }
-.project-actions button { display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;font-weight:700; }
-.project-actions button:hover { color:var(--purple); }
+.project-actions { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line);flex-wrap:wrap; }
+.project-actions button, .project-action-link { display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;font-weight:700;padding:8px 12px;border-radius:6px;transition:.2s;text-decoration:none;border:1px solid transparent;white-space:nowrap; }
+.project-actions button:hover, .project-action-link:hover { color:var(--purple);border-color:#5f4883;background:rgba(167,139,250,.08); }
+.project-action-link { display:inline-flex;align-items:center;gap:6px; }
+.project-action-primary { background:rgba(167,139,250,0.15);border-color:#5f4883;color:#c4b5fd; }
+.project-action-primary:hover { background:rgba(167,139,250,0.25); }
+.project-action-cta { margin-left:auto;flex-shrink:0; }
+@media (max-width:640px) { .project-actions { flex-direction:column;align-items:stretch;justify-content:flex-start; } .project-action-cta { margin-left:0; } }
 
 /* Skills, services, contact */
 .skills-section { width:100%;max-width:none;padding-inline:max(24px,calc((100vw - 1180px)/2));background:#101012;border-block:1px solid #242428; }

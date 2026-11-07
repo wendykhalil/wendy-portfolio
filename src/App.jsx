@@ -792,8 +792,22 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale, profile
                       ))}
                     </div>
                     <div className="project-actions">
+                      {project.liveUrl && project.liveUrl.trim() && (
+                        <a
+                          href={project.liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="project-action-link project-action-primary"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Open live demo in a new tab"
+                        >
+                          <Icon name="external" />
+                          {locale === "fr" ? "Live Demo" : "Live Demo"}
+                        </a>
+                      )}
                       {project.githubUrl && project.githubUrl.trim() && project.githubUrl !== "#" && (
                         <button
+                          className="project-action-secondary"
                           onClick={() =>
                             notify(
                               locale === "fr"
@@ -801,12 +815,17 @@ function PublicPortfolio({ projects, projectsLoading, locale, setLocale, profile
                                 : "Demo GitHub link",
                             )
                           }
+                          title="GitHub repository"
                         >
                           <Icon name="github" />
                           GitHub
                         </button>
                       )}
-                      <button onClick={() => setSelected({ ...project, _lightboxImages: allImages, _lightboxStartIndex: 0 })}>
+                      <button 
+                        className="project-action-cta"
+                        onClick={() => setSelected({ ...project, _lightboxImages: allImages, _lightboxStartIndex: 0 })}
+                        title="View full project details"
+                      >
                         {locale === "fr" ? "Voir le projet" : "View project"}
                         <Icon name="arrow" />
                       </button>

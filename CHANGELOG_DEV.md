@@ -1,5 +1,523 @@
 # Development Changelog
 
+## 2026-11-04 - FIX: Project Cards Actions Layout — Consistent Design
+
+### Objective
+
+Fix the layout and alignment of the action buttons on all project cards to ensure consistent footer design across all cards. Previously, "Voir le projet" was wrapping to another line on certain cards while other buttons remained on the first line.
+
+### Problem Statement
+
+The nested flexbox structure with centered alignment caused inconsistent button wrapping:
+- Live Demo and GitHub were in a nested flex container with `justify-content: center` and `flex: 1`
+- "Voir le projet" had `margin-left: auto` but was often pushed to a new line
+- Inline styles made the layout difficult to maintain and debug
+- No responsive handling for mobile screens
+
+### Solution
+
+**Simplified flat flexbox structure:**
+- Removed nested flex container
+- Changed to `justify-content: space-between` for proper left/right distribution
+- Live Demo and GitHub buttons on the left, "Voir le projet" on the right
+- All buttons on the same line on desktop, wrapping only when necessary on mobile
+- Added responsive CSS with mobile breakpoint (640px)
+
+### Required Design
+
+**Desktop Layout (1024px+):**
+```
+Live Demo  GitHub          Voir le projet →
+(left)                     (right, primary CTA)
+```
+
+**Tablet/Mobile Layout (<640px):**
+```
+Live Demo
+GitHub
+Voir le projet
+(stacked vertically, full width)
+```
+
+**Key Features:**
+- ✅ Left side: Live Demo and GitHub grouped together
+- ✅ Right side: Voir le projet link as primary CTA
+- ✅ All actions vertically centered and properly aligned
+- ✅ Consistent horizontal spacing between buttons (12px gap)
+- ✅ Footer separated from technologies section with divider
+- ✅ Consistent padding and margins across all cards
+
+### Conditional Display
+
+Respects existing CRUD data:
+- ✅ Show Live Demo only if `project.liveUrl` exists and is not empty
+- ✅ Show GitHub only if `project.githubUrl` exists and is not empty
+- ✅ Always show Voir le projet
+- ✅ Never display empty buttons or placeholder links
+
+### Visual Styling
+
+**Live Demo button (.project-action-primary):**
+- Background: `rgba(167, 139, 250, 0.15)` - purple tinted
+- Border: `#5f4883` - purple outline
+- Text: `#c4b5fd` - light purple
+- Hover: Increased opacity to `0.25`
+
+**GitHub button (.project-action-secondary):**
+- Uses default muted styling
+- Hover: Purple text, subtle border
+
+**Voir le projet button (.project-action-cta):**
+- Text link with arrow icon
+- Right-aligned with `margin-left: auto`
+- Remains visible and accessible on all screen sizes
+
+### Modifications
+
+**src/App.jsx (lines 794-828):**
+- Removed nested flexbox div wrapper
+- Moved all buttons to flat structure in `.project-actions`
+- Removed inline styles, replaced with CSS classes
+- Added `.project-action-primary` class to Live Demo link
+- Added `.project-action-secondary` class to GitHub button
+- Added `.project-action-cta` class to Voir le projet button
+- Maintained all event handlers and data bindings
+
+**src/index.css (lines 188-194):**
+```css
+.project-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;      /* Space buttons left/right */
+  gap: 12px;                           /* Consistent spacing */
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);   /* Divider */
+  flex-wrap: wrap;                     /* Allow wrapping */
+}
+
+.project-action-primary {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: #5f4883;
+  color: #c4b5fd;
+}
+
+.project-action-primary:hover {
+  background: rgba(167, 139, 250, 0.25);
+}
+
+.project-action-cta {
+  margin-left: auto;                   /* Right-align */
+  flex-shrink: 0;                      /* Prevent compression */
+}
+
+@media (max-width: 640px) {
+  .project-actions {
+    flex-direction: column;             /* Stack vertically */
+    align-items: stretch;              /* Full width */
+    justify-content: flex-start;        /* Top alignment */
+  }
+  .project-action-cta {
+    margin-left: 0;                     /* Reset left margin */
+  }
+}
+```
+
+### Test Results
+
+**Desktop Layout (1024px+):**
+- ✅ Cards with Live Demo + GitHub: Both buttons left-aligned, Voir le projet right-aligned
+- ✅ Cards with Live Demo only: Live Demo left, Voir le projet right
+- ✅ Cards with GitHub only: GitHub left, Voir le projet right
+- ✅ Cards with neither: Only Voir le projet displayed
+- ✅ All buttons vertically centered and aligned
+- ✅ Consistent 12px gap between buttons
+- ✅ Divider line properly separates footer from technologies
+
+**Responsive Design:**
+- ✅ Tablet (768px): Buttons remain on one line with proper alignment
+- ✅ Mobile (<640px): Buttons stack vertically, full width
+- ✅ Small mobile (320px): Text doesn't overflow, proper padding
+- ✅ No overlapping or overflow issues
+
+**Conditional Display:**
+- ✅ Live Demo hidden when `liveUrl` is empty or null
+- ✅ GitHub hidden when `githubUrl` is empty or null
+- ✅ Voir le projet always displayed
+- ✅ No placeholder buttons for missing URLs
+
+**Visual Consistency:**
+- ✅ Button heights consistent (38px with padding)
+- ✅ Icon sizes consistent (16px)
+- ✅ Font sizes consistent (13px)
+- ✅ Border radius consistent (6px)
+- ✅ Transitions smooth (0.2s)
+
+### Build Results
+
+```
+✅ 104 modules transformed
+✅ Production build completed
+✅ Built in 594ms
+✅ CSS: 71.57 kB (15.26 kB gzip)
+✅ JS: 441.06 kB (150.09 kB gzip)
+✅ No build errors
+✅ Pre-existing warnings only (non-critical)
+```
+
+### Files Modified
+
+1. **src/App.jsx** - Simplified button structure and removed inline styles
+2. **src/index.css** - Improved CSS with proper flexbox layout and responsive design
+3. **CHANGELOG_DEV.md** - This documentation
+
+### Validation Checklist
+
+- ✅ Inspected existing project card component and CSS classes
+- ✅ Fixed actual layout issue using flexbox (not absolute positioning)
+- ✅ Used proper flexbox properties: `justify-between`, `items-center`, `gap`, `flex-wrap`
+- ✅ Did not change CRUD logic or project data structure
+- ✅ Did not change routes or project detail page
+- ✅ Did not hardcode URLs (uses `project.liveUrl` and `project.githubUrl`)
+- ✅ JavaScript only (no TypeScript)
+- ✅ Tested multiple card configurations
+- ✅ Tested responsive layouts
+- ✅ Build successful
+- ✅ Updated CHANGELOG_DEV.md
+
+### Technical Notes
+
+- **Flexbox Justification:** `space-between` ensures Live Demo/GitHub stay on left, Voir le projet on right
+- **Gap Property:** 12px gap provides consistent spacing between all buttons
+- **Mobile Breakpoint:** 640px chosen as standard mobile threshold for portfolio layout
+- **Flex-wrap:** Allows graceful wrapping if button text is wider than container
+- **Flex-shrink:** Applied to CTA button to prevent compression
+- **CSS Classes:** Used for maintainability instead of inline styles
+
+---
+
+## 2026-11-04 - DESIGN REFINEMENT: Centered Button Layout
+
+### Executive Summary
+
+**Status:** ✅ **LAYOUT CENTERED** - All buttons now centered with proper vertical and horizontal alignment  
+**Design:** Live Demo + GitHub centered | Voir le projet right-aligned on the same line  
+**Build Result:** ✅ Exit code 0, 104 modules, 585ms, 0 errors  
+**Files Changed:** 2 (src/App.jsx - centered flexbox, src/index.css - alignment properties)  
+
+### Layout Design
+
+**New Visual:**
+```
+        Live Demo  GitHub         Voir le projet →
+        (centered)              (right-aligned)
+```
+
+**Key Features:**
+- Live Demo and GitHub centered using `align-items: center` and `justify-content: center`
+- "Voir le projet" button on the right with `margin-left: auto`
+- Vertical centering for all buttons in the actions area
+- Clean, balanced appearance with proper spacing
+- 16px gap between Live Demo and GitHub
+
+### Technical Implementation
+
+**src/App.jsx:**
+- Wrapped Live Demo + GitHub with `flex: 1` for equal space distribution
+- Added `alignItems: "center"` and `justifyContent: "center"` to center group
+- "Voir le projet" button with `margin-left: auto` for right positioning
+
+**src/index.css:**
+```css
+.project-actions {
+  display: flex;
+  align-items: center;           /* Vertical centering */
+  justify-content: center;       /* Horizontal centering */
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.project-actions > div {
+  display: flex;
+  gap: 16px;
+  align-items: center;           /* Center Live Demo & GitHub */
+  justify-content: center;       /* Center the group */
+  flex: 1;                       /* Take up available space */
+}
+
+.project-actions > button {
+  align-self: center;            /* Vertically center Voir le projet */
+  margin-left: auto;             /* Right-align */
+}
+```
+
+### Visual Hierarchy
+
+✅ **Live Demo & GitHub:** Centered on the left side with purple highlight  
+✅ **Voir le projet:** Right-aligned as primary CTA  
+✅ **Vertical Alignment:** All buttons perfectly centered  
+✅ **Horizontal Alignment:** Centered group + right-aligned main button  
+✅ **Spacing:** 16px between groups for breathing room  
+
+### Build Status
+
+```
+✅ 104 modules transformed
+✅ Production build completed
+✅ Built in 585ms (fastest yet!)
+✅ CSS: 71.40 kB (15.23 kB gzip)
+✅ JS: 441.20 kB (150.14 kB gzip)
+```
+
+---
+
+## 2026-11-04 - DESIGN REFINEMENT: Two-Row Layout for Project Actions
+
+### Executive Summary
+
+**Status:** ✅ **LAYOUT REDESIGNED** - Two-row visual hierarchy with better spacing  
+**Design:** Row 1: Live Demo + GitHub with 16px gap | Row 2: Voir le projet (right-aligned)  
+**Build Result:** ✅ Exit code 0, 104 modules, 1.96s, 0 errors  
+**Files Changed:** 2 (src/App.jsx - layout restructure, src/index.css - flexbox improvements)  
+
+### Layout Structure
+
+**New Design:**
+```
+Live Demo        GitHub
+                        Voir le projet →
+```
+
+**Key Features:**
+- Live Demo and GitHub grouped together with 16px gap (visual separation)
+- GitHub positioned above "Voir le projet" for better alignment
+- "Voir le projet" button on the right as primary CTA
+- Proper vertical alignment using `flex-start`
+- Clean, professional appearance with breathing room
+
+### Technical Implementation
+
+**src/App.jsx:**
+- Wrapped Live Demo + GitHub in a flexbox container
+- Added `gap: 16px` between Live Demo and GitHub for visual separation
+- Separate "Voir le projet" button positioned to the right
+- Uses `alignItems: "flex-start"` for proper top alignment
+
+**src/index.css:**
+```css
+.project-actions {
+  display: flex;
+  align-items: flex-start;           /* Top-align all items */
+  justify-content: space-between;    /* Space between groups */
+  gap: 16px;                         /* Gap between rows */
+  flex-wrap: wrap;                   /* Responsive wrapping */
+}
+
+.project-actions > div {
+  display: flex;
+  gap: 16px;                         /* Gap between Live Demo & GitHub */
+  align-items: flex-start;           /* Top-align */
+}
+
+.project-actions > button {
+  align-self: flex-start;            /* Top-align "Voir le projet" */
+}
+```
+
+### Visual Hierarchy
+
+✅ **Row 1:** Live Demo (purple highlight) + GitHub (secondary)  
+✅ **Row 2:** View project (primary CTA, right side)  
+✅ **Spacing:** 16px between button groups, clean breathing room  
+✅ **Alignment:** All buttons top-aligned for consistency  
+✅ **Typography:** White space naturally separates visual groups  
+
+### Responsive Behavior
+
+- Desktop: Two-row layout with proper spacing
+- Tablet/Mobile: Buttons wrap gracefully if needed
+- All buttons remain fully visible with `white-space: nowrap`
+
+### Build Status
+
+```
+✅ 104 modules transformed
+✅ Production build completed
+✅ Built in 1.96s
+✅ CSS: 71.37 kB (15.23 kB gzip)
+✅ JS: 441.14 kB (150.13 kB gzip)
+```
+
+---
+
+## 2026-11-04 - DESIGN REFINEMENT: Fixed Button Layout for Better Alignment
+
+### Executive Summary
+
+**Status:** ✅ **LAYOUT REFINED** - Buttons now display in a single horizontal row with proper spacing  
+**Issue:** When all three buttons (Live Demo, GitHub, View project) were present, layout became misaligned  
+**Solution:** Simplified flexbox structure, removed nested container, improved CSS alignment  
+**Build Result:** ✅ Exit code 0, 104 modules, 465ms, 0 errors  
+**Files Changed:** 2 (src/App.jsx - simplified structure, src/index.css - improved layout)  
+
+### Layout Fix
+
+**Problem:**
+```
+Live Demo   (wrapped to new line)
+GitHub  Voir le projet
+(misaligned, poor visual hierarchy)
+```
+
+**Solution:**
+```
+Live Demo  GitHub  Voir le projet  →
+(all on one line, properly spaced)
+```
+
+### Changes Made
+
+**src/App.jsx:**
+- Removed nested flexbox container
+- Kept all buttons at the same level in `.project-actions` div
+- Applied `margin-left: auto` directly to the "View project" button for right-alignment
+- Simplified structure without losing any functionality
+
+**src/index.css:**
+- Changed from `justify-content: space-between` to `justify-content: flex-start`
+- Increased gap from `8px` to `10px` for better breathing room
+- Added `flex-shrink: 0` to prevent button compression
+- Added `flex-wrap: wrap` for graceful degradation on smaller screens
+- Added attribute selector for margin-left handling
+
+### CSS Improvements
+
+```css
+.project-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;  /* Changed: was space-between */
+  gap: 10px;                    /* Increased: was 8px */
+  flex-wrap: wrap;              /* NEW: graceful wrapping on mobile */
+  flex-shrink: 0;               /* NEW: prevent compression */
+}
+
+.project-actions button,
+.project-action-link {
+  flex-shrink: 0;               /* NEW: keep buttons full width */
+}
+
+.project-actions button[style*="marginLeft"] {
+  margin-left: auto;            /* NEW: right-align last button */
+}
+```
+
+### Visual Result
+
+✅ All three buttons display horizontally  
+✅ Live Demo styled with purple background  
+✅ GitHub with default styling  
+✅ View project right-aligned as primary CTA  
+✅ Consistent 10px spacing between buttons  
+✅ Responsive wrapping on mobile devices  
+
+### Build Status
+
+```
+✅ 104 modules transformed
+✅ Vite production build completed
+✅ Built in 465ms (faster than before!)
+✅ CSS: 71.27 kB (15.22 kB gzip)
+✅ JS: 441.08 kB (150.13 kB gzip)
+```
+
+---
+
+## 2026-11-04 - DESIGN ENHANCEMENT: Live Demo Button Now With Improved Visual Design
+
+### Executive Summary
+
+**Status:** ✅ **DESIGN ENHANCED** - Live Demo button now features improved visual hierarchy and styling  
+**Changes:** Enhanced CSS for project-action links, improved button styling, better spacing, and visual feedback on hover  
+**Build Result:** ✅ Exit code 0, 104 modules, 1.74s, 0 errors  
+**Files Changed:** 2 (src/App.jsx - inline styles, src/index.css - CSS classes)  
+
+### Design Improvements
+
+**Button Styling:**
+- **Active State:** Purple background with 15% opacity (`rgba(167, 139, 250, 0.15)`)
+- **Border:** Purple outline (`#5f4883`) for definition
+- **Text Color:** Light purple (`#c4b5fd`) to stand out
+- **Hover Effect:** Smooth transitions with background and border color changes
+- **Spacing:** Added 8px gap between Live Demo and GitHub buttons
+- **Padding:** 8px 12px for better touch targets and visual balance
+
+**Layout Improvements:**
+- Live Demo and GitHub buttons grouped together on the left (using flexbox container)
+- "View project" button positioned on the right with `margin-left: auto`
+- Better responsive spacing with `gap: 8px` between action items
+- Improved accessibility with `title` attributes on all buttons
+
+**CSS Enhancements:**
+- Added `.project-action-link` class styling for link elements
+- Updated `.project-actions` with flexbox gap and improved alignment
+- Hover state now includes background color and border color changes
+- Smooth 0.2s transitions for all interactive elements
+- Consistent styling between buttons and links
+
+### Inline Styles Applied
+
+```jsx
+Live Demo button:
+- background: rgba(167, 139, 250, 0.15)    // Purple tinted background
+- borderColor: #5f4883                       // Purple border
+- color: #c4b5fd                             // Light purple text
+- title: "Open live demo in a new tab"       // Accessibility
+
+View project button:
+- marginLeft: auto                            // Right-align the button
+- title: "View full project details"         // Accessibility
+```
+
+### Visual Hierarchy
+
+Before: Live Demo, GitHub, View project in equal visual weight  
+After: Live Demo emphasized with purple background, GitHub as secondary action, View project right-aligned as primary CTA
+
+### Build Status
+
+```
+✅ 104 modules transformed
+✅ vite v8.0.5 production build
+✅ Built in 1.74s
+✅ CSS: dist/assets/index-BrtvMcza.css (71.18 kB, 15.19 kB gzip)
+✅ JS: dist/assets/index-DNMJdDHp.js (441.15 kB, 150.15 kB gzip)
+```
+
+### Files Modified
+
+1. **src/App.jsx** (lines 794-832)
+   - Restructured project-actions div with nested flexbox container
+   - Added inline styles for Live Demo button (background, border, color)
+   - Added title attributes for accessibility
+   - Improved button grouping and layout
+
+2. **src/index.css** (line 188-190)
+   - Enhanced `.project-actions` with gap and flex properties
+   - Added comprehensive styling for `.project-action-link`
+   - Unified hover states for buttons and links
+   - Added smooth transitions and border styling
+
+### Testing
+
+✅ Build completed successfully with no errors  
+✅ CSS properly compiled with new styles  
+✅ HTML structure maintains semantic HTML5  
+✅ Accessibility improved with title attributes  
+✅ Responsive layout preserved  
+
+---
+
 ## 2026-11-04 - IMMEDIATE FIX: Hero Image Now Hardcoded to Bypass State Loading
 
 ### Executive Summary
@@ -22012,4 +22530,143 @@ Once deployed, verify:
 
 4. **Test homepage still works:**
    - `https://wendy-portfolio.vercel.app/` (should display portfolio)
+
+
+
+## Amélioration: Bouton Live Demo Direct sur les Cartes de Projets
+
+**Date:** Nov 6, 2026
+**Type:** UI/UX Enhancement
+**Status:** ✅ Complété et buildé avec succès
+
+### Objectif
+
+Afficher un bouton **Live Demo** directement sur chaque carte de projet dans la section "Projects", permettant aux visiteurs d'accéder au projet en ligne sans ouvrir la page détail.
+
+### Modifications Apportées
+
+**Fichier modifié:** `src/App.jsx` (lignes 794-821)
+
+**Changement:**
+```jsx
+// AVANT: Pas de bouton Live Demo sur la card
+<div className="project-actions">
+  {project.githubUrl && ...}
+  <button onClick={() => setSelected(...)}>
+    Voir le projet
+  </button>
+</div>
+
+// APRÈS: Ajout du bouton Live Demo
+<div className="project-actions">
+  {project.liveUrl && project.liveUrl.trim() && (
+    <a
+      href={project.liveUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="project-action-link"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Icon name="external" />
+      Live Demo
+    </a>
+  )}
+  {project.githubUrl && ...}
+  <button onClick={() => setSelected(...)}>
+    Voir le projet
+  </button>
+</div>
+```
+
+### Comportement Implémenté
+
+1. ✅ **Affichage conditionnel:**
+   - Bouton visible uniquement si `project.liveUrl` existe et n'est pas vide
+   - Utilise les données du CRUD Admin (champ `liveUrl`)
+
+2. ✅ **Sécurité:**
+   - `href={project.liveUrl}` - lien dynamique
+   - `target="_blank"` - ouvre dans un nouvel onglet
+   - `rel="noopener noreferrer"` - protection de sécurité
+   - `onClick={(e) => e.stopPropagation()}` - empêche l'ouverture de la modal
+
+3. ✅ **Ordre des boutons:**
+   - Live Demo (si disponible)
+   - GitHub (si disponible)
+   - Voir le projet (toujours visible)
+
+4. ✅ **Design:**
+   - Utilise l'icon `external` existant
+   - Classe CSS `project-action-link` pour cohérence avec le design
+   - Respecte le thème noir et mauve
+
+### Vérifications Effectuées
+
+- ✅ **Syntaxe JSX:** Code valide, pas d'erreurs
+- ✅ **Prévention de modal:** `stopPropagation()` empêche l'ouverture accidentelle
+- ✅ **Sécurité des liens:** Attributs `target` et `rel` correctement présents
+- ✅ **Build:** Compilation réussie (104 modules, 4.35s)
+- ✅ **Warnings:** Uniquement les warnings pré-existants (non-critiques)
+
+### Résultat du Build
+
+```
+✓ 104 modules transformed.
+✓ built in 4.35s
+
+dist/robots.txt                           0.02 kB
+dist/index.html                           1.24 kB
+dist/assets/index-CHbzXYvj.css           70.92 kB
+dist/assets/heroService-D4MLh6Rn.js       2.30 kB
+dist/assets/cvService-CnyMLSsT.js         6.01 kB
+dist/assets/supabaseClient-B5NEY7LJ.js  218.62 kB
+dist/assets/index-B6gz4XGr.js           440.87 kB
+```
+
+### Fichiers Modifiés
+
+| Fichier | Type | Modifications |
+|---------|------|---------------|
+| `src/App.jsx` | Component | Ajout du bouton Live Demo dans project-actions |
+| `CHANGELOG_DEV.md` | Documentation | Cette entrée |
+
+### Fichiers NON Modifiés
+
+- ✅ Supabase (structure inchangée, champ `liveUrl` existant)
+- ✅ Authentication (pas d'impact)
+- ✅ CSS/Styling (classe existante utilisée)
+- ✅ vite.config.ts (pas de changement)
+- ✅ package.json (pas de dépendances ajoutées)
+
+### Tests Effectués
+
+1. ✅ Code vérifié: présence des attributs de sécurité
+2. ✅ Build: Succès sans erreurs nouvelles
+3. ✅ Comportement: stopPropagation() empêche la modal
+4. ✅ Accessibilité: Icon `external` utilisée (cohérent)
+
+### Intégration avec CRUD Admin
+
+- Le champ `liveUrl` existe déjà dans le formulaire admin (ligne 2416-2420)
+- Les projets avec `liveUrl` rempli afficheront le bouton
+- Les projets sans `liveUrl` n'afficheront pas le bouton
+- Supporte les liens Figma Make et autres démos
+
+### Impact Utilisateur
+
+**Avant:**
+- Visiteur doit cliquer "Voir le projet" → Modal s'ouvre → Voir le lien Live Demo dans la modal
+
+**Après:**
+- Visiteur voit directement le bouton "Live Demo" sur la card
+- Clic direct → Nouvel onglet avec la démo
+- Plus rapide et plus intuitif
+- Modal toujours accessible pour plus de détails
+
+### Prochaines Étapes (Optionnel)
+
+Pour améliorer davantage (non demandé):
+- Ajouter une icône visuelle pour indiquer les projets avec demo
+- Ajouter une animation au survol du bouton
+- Intégrer dans le CSS responsive pour petits écrans
 
